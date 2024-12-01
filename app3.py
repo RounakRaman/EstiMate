@@ -842,7 +842,7 @@ Example interview patterns from real interviews -:
             6. 'filters_missed': (they missed and needed to added in string)
             6. 'key_strengths': (Good poitns in the approach in string) 
             7. 'areas_for_improvement': (Areas in approach to improve in string)
-            Keep names of 'Key'  like 'structure', 'assumptions', etc..  in JSON as above only. Format as valid JSON string only """
+            Keep names of 'Key'  like 'structure', 'assumptions', etc..  in JSON as above only. Format as valid JSON string only. FORMAT AS VALID JSON ONLY. I am Saying this again: RETURN AS JSON FORMAT STRING. """
         
         messages = [
             {
@@ -858,8 +858,14 @@ Example interview patterns from real interviews -:
             max_tokens=1024,
             temperature=0.3
         )
-        
-        return json.loads(response.content[0].text)
+        evaluation_json={}
+        try:
+            evaluation_json=json.loads(response.content[0].text)
+            return evaluation_json
+        except (json.JSONDecodeError, IndexError, AttributeError) as e:
+            print(f"Error parsing JSON: {e}")
+            return None
+
     
 
 
@@ -1001,28 +1007,63 @@ def main():
         # Display evaluation
         if st.session_state.evaluation_done:
             st.header("Interview Evaluation")
-            eval_data = st.session_state.evaluation
+            try:
+                eval_data = st.session_state.get("evaluation", {})
+                
+                # Ensure eval_data is a dictionary
+                if not isinstance(eval_data, dict):
+                    raise ValueError("Evaluation data is not in the expected format.")
+
+                # Convert scores to a 10-point scale (assuming original scores were out of 5)
+                scores = {
+                    "Structure": eval_data.get("structure", 0) * 2,
+                    "Assumptions": eval_data.get("assumptions", 0) * 2,
+                    "Segmentation": eval_data.get("segmentation", 0) * 2,
+                    "Math": eval_data.get("math", 0) * 2,
+                    "Context": eval_data.get("context", 0) * 2,
+                }
+
+                # Display bar graph
+                st.plotly_chart(create_score_bar_graph(scores), use_container_width=True)
+
+                # Display detailed feedback
+                st.subheader("Detailed Feedback")
+                st.write("**Missed Filters:**")
+                st.write(eval_data.get("filters_missed", "No data available"))
+                st.write("**Key Strengths:**")
+                st.write(eval_data.get("key_strengths", "No data available"))
+                st.write("**Areas for improvement**")
+                st.write(eval_data.get("areas_for_improvement", "No data available"))
+
+            except KeyError as e:
+                st.error(f"Missing key in evaluation data: {e}")
+            except ValueError as e:
+                st.error(f"Invalid evaluation data: {e}")
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
+
+            # eval_data = st.session_state.evaluation
             
-            # Convert scores to 10-point scale (assuming original scores were out of 5)
-            scores = {
-                "Structure": eval_data.get("structure", 0) * 2,
-                "Assumptions": eval_data.get("assumptions", 0) * 2,
-                "Segmentation": eval_data.get("segmentation", 0) * 2,
-                "Math": eval_data.get("math", 0) * 2,
-                "Context": eval_data.get("context", 0) * 2
-            }
+            # # Convert scores to 10-point scale (assuming original scores were out of 5)
+            # scores = {
+            #     "Structure": eval_data.get("structure", 0) * 2,
+            #     "Assumptions": eval_data.get("assumptions", 0) * 2,
+            #     "Segmentation": eval_data.get("segmentation", 0) * 2,
+            #     "Math": eval_data.get("math", 0) * 2,
+            #     "Context": eval_data.get("context", 0) * 2
+            # }
             
-            # Display bar graph
-            st.plotly_chart(create_score_bar_graph(scores), use_container_width=True)
+            # # Display bar graph
+            # st.plotly_chart(create_score_bar_graph(scores), use_container_width=True)
             
-            # Display detailed feedback
-            st.subheader("Detailed Feedback")
-            st.write("**Missed Filters:**")
-            st.write(eval_data.get("filters_missed", ""))
-            st.write("**Key Strengths:**")
-            st.write(eval_data.get("key_strengths", ""))
-            st.write("**Areas for improvement**")
-            st.write(eval_data.get("areas_for_improvement", ""))
+            # # Display detailed feedback
+            # st.subheader("Detailed Feedback")
+            # st.write("**Missed Filters:**")
+            # st.write(eval_data.get("filters_missed", ""))
+            # st.write("**Key Strengths:**")
+            # st.write(eval_data.get("key_strengths", ""))
+            # st.write("**Areas for improvement**")
+            # st.write(eval_data.get("areas_for_improvement", ""))
 
 if __name__ == "__main__":
     main()
