@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 import plotly.graph_objects as go
-import pyttsx3
+#import pyttsx3
 import anthropic
 import json
 from typing import List, Dict
@@ -876,15 +876,15 @@ def response_generator(response):
         for word in sentence.split(" "):  # Corrected 'split'
             yield word + " "  # Yield each word with a space
             time.sleep(0.05)
-        SpeakText(sentence)  # Speak the entire sentence after yielding words
+        #SpeakText(sentence)  # Speak the entire sentence after yielding words
 
 
-# Function to convert text to speech
-def SpeakText(command):
-    # Initialize the engine
-    engine = pyttsx3.init()
-    engine.say(command) 
-    engine.runAndWait()
+# # Function to convert text to speech
+# def SpeakText(command):
+#     # Initialize the engine
+#     engine = pyttsx3.init()
+#     engine.say(command) 
+#     engine.runAndWait()
 
 def save_interview(conversation_history: list, evaluation: dict):
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
