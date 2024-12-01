@@ -1,0 +1,20 @@
+Guesstimate Interview
+Datetime: 2024-12-01-15-44-13
+
+Interviewer: Your problem statement is to Estimate the Number of Aeroplanes in the Air Now. Please feel free to ask any clarifying questions before you begin.
+Candidate: India or Global
+Interviewer: Let's focus on India for this estimation.
+Candidate: Domestic or Internantional or both ?
+Interviewer: Both domestic and international flights currently in Indian airspace.
+
+Evaluation:
+{
+  "structure": 1,
+  "assumptions": 0,
+  "segmentation": 0,
+  "math": 0,
+  "context": 1,
+  "filters_missed": "Major airports vs regional airports, Types of aircraft (commercial vs private), Flight durations, Peak vs off-peak hours, Seasonal variations, International routes through Indian airspace, Domestic route networks, Military/defense flights",
+  "key_strengths": "Asked relevant clarifying questions about scope (domestic vs international)",
+  "areas_for_improvement": "Need to break down into logical segments (major airports, routes), Consider time zones and flight patterns, Include assumptions about flight durations and frequencies, Factor in seasonal and daily variations, Consider different types of aircraft operations"
+}
