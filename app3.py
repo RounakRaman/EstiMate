@@ -711,7 +711,7 @@ INTERVIEW_DICT={
 #######################################################################################
 ## Chatbot Class
 class GuesstimateChatbot:
-    def __init__(self, api_key: str, interview_data_path: str):
+    def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.interview_data = self.load_interview_data(INTERVIEW_DICT)
         self.conversation_history = []
@@ -959,10 +959,11 @@ def main():
     with st.sidebar:
         st.header("Configuration")
         api_key = st.text_input("Enter Anthropic API Key:", type="password")
-        interview_data_path = st.text_input("Interview Data Path:", value="interview_with_context.json")
+        #interview_data_path = st.text_input("Interview Data Path:", value="interview_with_context.json")
         
         if st.button("Start New Interview", disabled=not api_key):
-            st.session_state.chatbot = GuesstimateChatbot(api_key, interview_data_path)
+            #st.session_state.chatbot = GuesstimateChatbot(api_key, interview_data_path)
+            st.session_state.chatbot = GuesstimateChatbot(api_key)
             st.session_state.messages = []
             st.session_state.interview_started = True
             st.session_state.evaluation_done = False
