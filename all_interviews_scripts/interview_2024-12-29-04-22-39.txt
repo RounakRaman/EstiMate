@@ -1,0 +1,20 @@
+Guesstimate Interview
+Datetime: 2024-12-29-04-22-39
+
+Interviewer: Your problem statement is to Estimate the number of SRK fans in India. Please feel free to ask any clarifying questions before you begin.
+Candidate: alright
+Interviewer: You can start by asking clarifying questions about the problem before sharing your approach.
+Candidate: are we talking any particular age group
+Interviewer: No specific age group - consider all age groups who could be SRK fans
+
+Evaluation:
+{
+  "structure": 1,
+  "assumptions": 0,
+  "segmentation": 1,
+  "math": 0,
+  "context": 1,
+  "filters_missed": "Age groups, Urban vs Rural population, Social media followers, Movie-going population, Income levels, Access to entertainment mediums, Regional language preferences, Gender distribution, Education levels",
+  "key_strengths": "Started with asking about age segmentation which could be relevant",
+  "areas_for_improvement": "Need to ask more clarifying questions about timeline (recent vs career-long fans), need to consider regional market penetration, should segment by access to movies/entertainment, need to consider socioeconomic factors affecting movie consumption, should factor in social media presence, need to consider different age groups' exposure to SRK's work"
+}
