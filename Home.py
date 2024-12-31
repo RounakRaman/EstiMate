@@ -8,6 +8,7 @@ from typing import List, Dict
 import random
 import time
 import os
+from fpdf import FPDF
 
 
 
@@ -217,18 +218,53 @@ def save_interview(conversation_history: list, evaluation: dict):
     
     return file_path
 
-def download_interview_transcript(conversation_history: list,evaluation: dict) -> str:
+
+
+def download_interview_transcript(conversation_history: list, evaluation: dict) -> str:
     """
-    Generate a downloadable transcript of the conversation history.
+    Generate a downloadable transcript of the conversation history as a PDF file.
     """
-    transcript_content = "Guesstimate Interview Transcript\n\n"
+    # Create PDF instance
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    # Title
+    pdf.set_font("Arial", style="B", size=16)
+    pdf.cell(200, 10, txt="Guesstimate Interview Transcript", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Date and Time
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Date and Time: {timestamp}", ln=True)
+    pdf.ln(10)
+    
+    # Conversation History
+    pdf.set_font("Arial", style="B", size=12)
+    pdf.cell(0, 10, txt="Conversation History:", ln=True)
+    pdf.ln(5)
+    pdf.set_font("Arial", size=12)
     for msg in conversation_history:
         role = "Interviewer" if msg["role"] == "assistant" else "Candidate"
-        transcript_content += f"{role}: {msg['content']}\n"
-    transcript_content += "\nEvaluation Results:\n"
-    transcript_content += json.dumps(evaluation, indent=2)
+        pdf.multi_cell(0, 10, txt=f"{role}: {msg['content']}")
+        pdf.ln(2)
     
-    return transcript_content
+    # Evaluation Section
+    pdf.ln(10)
+    pdf.set_font("Arial", style="B", size=12)
+    pdf.cell(0, 10, txt="Evaluation Results:", ln=True)
+    pdf.ln(5)
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, txt=json.dumps(evaluation, indent=2))
+    
+    # Save the PDF
+    file_name = f"interview_transcript_{timestamp.replace(':', '-').replace(' ', '_')}.pdf"
+    pdf.output(file_name)
+    return file_name
+    
+    
 
 def create_score_bar_graph(scores):
     fig = go.Figure(data=[
@@ -417,12 +453,16 @@ def main():
                 st.error(f"An unexpected error occurred: {e}")
 
         if st.session_state.evaluation_done:
-            transcript = download_interview_transcript(st.session_state.messages,st.session_state.evaluation)
+            file_name = download_interview_transcript(st.session_state.messages,st.session_state.evaluation)
+            
+            with open(file_name, "rb") as pdf_file:
+                pdf_data = pdf_file.read()
+
             st.download_button(
                 label="Download Your Interview Transcript",
-                data=transcript,
-                file_name="interview_transcript.txt",
-                mime="text/plain"
+                data=pdf_data,
+                file_name=file_name,
+                mime="application/pdf"
             )        
 
             # eval_data = st.session_state.evaluation
