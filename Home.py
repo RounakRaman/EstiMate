@@ -369,7 +369,6 @@ def main():
         # Display evaluation
         if st.session_state.evaluation_done:
             st.header("Interview Evaluation")
-            
 
 
             try:
@@ -409,8 +408,7 @@ def main():
                     feedback_file_path = os.path.join("feedback_data", f"feedback_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.json")
                     os.makedirs("feedback_data", exist_ok=True)
                     with open(feedback_file_path, "w") as feedback_file:
-                        json.dump(feedback_data, feedback_file,
-                         indent=4)
+                        json.dump(feedback_data, feedback_file,indent=4)
             
                     st.success("Thank you for your feedback! Your responses have been recorded.")
                     st.session_state.form_submitted = True
