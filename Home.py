@@ -217,7 +217,7 @@ def save_interview(conversation_history: list, evaluation: dict):
     
     return file_path
 
-def download_interview_transcript(conversation_history: list) -> str:
+def download_interview_transcript(conversation_history: list,evaluation: dict) -> str:
     """
     Generate a downloadable transcript of the conversation history.
     """
@@ -225,6 +225,8 @@ def download_interview_transcript(conversation_history: list) -> str:
     for msg in conversation_history:
         role = "Interviewer" if msg["role"] == "assistant" else "Candidate"
         transcript_content += f"{role}: {msg['content']}\n"
+    transcript_content += "\nEvaluation Results:\n"
+    transcript_content += json.dumps(evaluation, indent=2)
     
     return transcript_content
 
@@ -415,7 +417,7 @@ def main():
                 st.error(f"An unexpected error occurred: {e}")
 
         if st.session_state.evaluation_done:
-            transcript = download_interview_transcript(st.session_state.messages)
+            transcript = download_interview_transcript(st.session_state.messages,st.session_state.evaluation)
             st.download_button(
                 label="Download Your Interview Transcript",
                 data=transcript,
