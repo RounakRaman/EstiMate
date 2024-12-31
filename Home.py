@@ -276,7 +276,7 @@ def main():
         st.session_state.evaluation_done = False
     if 'chatbot' not in st.session_state:
         st.session_state.chatbot = None
-    st.page_link("pages/aboutUs.py",label="How To Use EstiMate",icon="🤖")    
+    st.page_link("pages/How To Use.py",label="How To Use EstiMate",icon="🤖")    
     # Sidebar for API key and controls
     with st.sidebar:
         st.header("Configuration")
