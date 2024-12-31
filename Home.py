@@ -199,7 +199,7 @@ def response_generator(response):
 
 def save_interview(conversation_history: list, evaluation: dict):
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    folder_path = "all_interviews_scripts"
+    folder_path = "interview_scripts"
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
         
