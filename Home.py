@@ -375,7 +375,7 @@ def main():
             try:
                 
 
-                if st.session_state.evaluation_done and st.session.get("form_submitted") not in st.session_state:
+                if st.session_state.evaluation_done and "form_submitted" not in st.session_state:
                     st.subheader("Please Fill Out the Feedback Form Before Viewing Your Results")
 
                     with st.form("feedback_form"):
