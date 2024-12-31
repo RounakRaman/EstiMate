@@ -1,0 +1,4 @@
+Guesstimate Interview Transcript
+Interviewer: Your problem statement is to Estimate the number of hours air conditioners are run in Delhi per year. Please provide your approach to estimate this value.
+Candidate: okay
+Interviewer: Feel free to ask any clarifying questions before you begin your estimation.
