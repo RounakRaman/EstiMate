@@ -248,16 +248,20 @@ def download_interview_transcript(conversation_history: list, evaluation: dict) 
     pdf.set_font("Arial", size=12)
     for msg in conversation_history:
         role = "Interviewer" if msg["role"] == "assistant" else "Candidate"
-        pdf.multi_cell(0, 10, txt=f"{role}: {msg['content']}")
+        # Handle unsupported characters
+        content = msg['content'].encode('latin1', 'replace').decode('latin1')
+        pdf.multi_cell(0, 10, txt=f"{role}: {content}")
         pdf.ln(2)
-    
+
     # Evaluation Section
     pdf.ln(10)
     pdf.set_font("Arial", style="B", size=12)
     pdf.cell(0, 10, txt="Evaluation Results:", ln=True)
     pdf.ln(5)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt=json.dumps(evaluation, indent=2))
+    # Handle unsupported characters in evaluation
+    evaluation_text = json.dumps(evaluation, indent=2).encode('latin1', 'replace').decode('latin1')
+    pdf.multi_cell(0, 10, txt=evaluation_text)
     
     # Save the PDF
     file_name = f"interview_transcript_{timestamp.replace(':', '-').replace(' ', '_')}.pdf"
