@@ -369,7 +369,7 @@ def main():
         # Display evaluation
         if st.session_state.evaluation_done:
             st.header("Interview Evaluation")
-            st.session_state.form_submitted = False
+            
 
 
             try:
