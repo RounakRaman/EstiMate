@@ -17,7 +17,6 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 existing_data = conn.read(spreadsheet=url,usecols=list(range(10)))
 
 
-#######################################################################################
 ## Chatbot Class
 class GuesstimateChatbot:
     
