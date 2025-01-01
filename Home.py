@@ -12,7 +12,7 @@ from fpdf import FPDF
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-conn = st.experimental_connection("gsheets", type=GSheetsConnection)
+conn = st.connection("gsheets", type=GSheetsConnection)
 existing_data = conn.read("User Feedback Data",usecols=list(range(10)))
 #######################################################################################
 ## Chatbot Class
