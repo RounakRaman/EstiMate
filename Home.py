@@ -15,6 +15,9 @@ import pandas as pd
 url="https://docs.google.com/spreadsheets/d/1kWUzF7UqwA2_1ZFxAxM3Omd8tBnIP7L_1qvF7Dg1ZHw/edit"
 conn = st.connection("gsheets", type=GSheetsConnection)
 existing_data = conn.read(spreadsheet=url,usecols=list(range(10)))
+
+if conn is None:
+    st.error("Google Sheets connection failed. Please check your credentials.")
 #######################################################################################
 ## Chatbot Class
 class GuesstimateChatbot:
