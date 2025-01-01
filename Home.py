@@ -19,7 +19,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 existing_data = conn.read(worksheet="data",usecols=list(range(10)))
 existing_data=existing_data.dropna(how='all')
 
-st.dataframe(existing_data)
+
 
 ## Chatbot Class
 class GuesstimateChatbot:
