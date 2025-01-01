@@ -8,7 +8,7 @@ from typing import List, Dict
 import random
 import time
 import os
-from fpdf2 import FPDF
+from fpdf import FPDF
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
