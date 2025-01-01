@@ -13,7 +13,7 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
 conn = st.connection("gsheets", type=GSheetsConnection)
-existing_data = conn.read("User Feedback Data",usecols=list(range(10)))
+existing_data = conn.read(sheet_name="User Feedback Data",usecols=list(range(10)))
 #######################################################################################
 ## Chatbot Class
 class GuesstimateChatbot:
