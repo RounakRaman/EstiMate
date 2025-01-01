@@ -438,14 +438,24 @@ def main():
                         conn.update(worksheet="data",data=updated_df)
 
                         st.success("Thank you for your feedback! Your responses have been recorded. You can now download your interview transcript and view your results.")
-
+                        feedback_data_json = {
+                            "Submission Time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "first_name": "John",
+                            "last_name": "Doe",
+                            "college_name": "Example University",
+                            "year_of_passing": 2023,
+                            "knowledge_level": "Intermediate",
+                            "session_feedback": "The session was very insightful and engaging.",
+                            "expected_score": 85,
+                            "overall_experience": "Excellent",
+                            "reuse": True } 
                     
 
             # Save feedback data as a JSON file
-                    feedback_file_path = os.path.join("feedback_data", f"feedback_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.json")
-                    os.makedirs("feedback_data", exist_ok=True)
+                    feedback_file_path = os.path.join("feedback_data_json", f"feedback_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.json")
+                    os.makedirs("feedback_data_json", exist_ok=True)
                     with open(feedback_file_path, "w") as feedback_file:
-                        json.dump(feedback_data, feedback_file,indent=4)
+                        json.dump(feedback_data_json, feedback_file,indent=4)
             
                     st.success("Thank you for your feedback! Your responses have been recorded.")
                     st.session_state.form_submitted = True
