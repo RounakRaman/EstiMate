@@ -423,7 +423,7 @@ def main():
 
                         updated_df=pd.concat([existing_data,feedback_data],ignore_index=True)
 
-                        conn.update("User Feedback Data",updated_df)
+                        conn.update(worksheet="User Feedback Data",data=updated_df)
 
                         st.success("Thank you for your feedback! Your responses have been recorded. You can now download your interview transcript and view your results.")
 
