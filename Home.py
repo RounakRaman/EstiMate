@@ -13,7 +13,7 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
 url="https://docs.google.com/spreadsheets/d/1kWUzF7UqwA2_1ZFxAxM3Omd8tBnIP7L_1qvF7Dg1ZHw/edit?gid=0#gid=0"
-conn = st.experimental_connection("gsheets", type=GSheetsConnection)
+conn = st.connection("gsheets", type=GSheetsConnection)
 existing_data = conn.read(spreadsheet=url,usecols=list(range(10)))
 #######################################################################################
 ## Chatbot Class
