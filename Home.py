@@ -308,6 +308,8 @@ def main():
         
     
     st.title("🤖 Guesstimate Interview Assistant")
+
+    i=0
     
     # Initialize session state
     if 'messages' not in st.session_state:
@@ -404,6 +406,7 @@ def main():
                         st.stop()
             # Save user responses
                     else:
+                        i=i+1
 
                         feedback_data = pd.DataFrame({
                             "Submission Time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -416,7 +419,7 @@ def main():
                             "expected_score": expected_score,
                             "overall_experience": overall_experience,
                             "reuse": reuse,
-                        })
+                        },index=[i])
 
                         updated_df=pd.concat([existing_data,feedback_data],ignore_index=True)
 
