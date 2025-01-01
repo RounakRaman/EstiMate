@@ -304,9 +304,7 @@ def create_score_bar_graph(scores):
 
 
 def main():
-    st.set_page_config(page_title="EstiMate", layout="wide")
-
-    
+      
         
     
     st.title("🤖 Guesstimate Interview Assistant")
