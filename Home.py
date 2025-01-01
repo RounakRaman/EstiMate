@@ -12,10 +12,14 @@ from fpdf import FPDF
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-url="https://docs.google.com/spreadsheets/d/1kWUzF7UqwA2_1ZFxAxM3Omd8tBnIP7L_1qvF7Dg1ZHw/edit"
-conn = st.connection("gsheets", type=GSheetsConnection)
-existing_data = conn.read(spreadsheet=url,usecols=list(range(10)))
+# url="https://docs.google.com/spreadsheets/d/1kWUzF7UqwA2_1ZFxAxM3Omd8tBnIP7L_1qvF7Dg1ZHw"
 
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+existing_data = conn.read(worksheet="data",usecols=list(range(10)))
+existing_data=existing_data.dropna(how='all')
+
+st.dataframe(existing_data)
 
 ## Chatbot Class
 class GuesstimateChatbot:
@@ -386,20 +390,20 @@ def main():
                 if st.session_state.evaluation_done and "form_submitted" not in st.session_state:
                     st.subheader("Please Fill Out the Feedback Form Before Viewing Your Results")
 
-                    with st.form("feedback_form"):
-                        first_name = st.text_input("First Name*")
-                        last_name = st.text_input("Last Name")
-                        college_name = st.text_input("Name of College*")
-                        year_of_passing = st.text_input("Year of Passing*")
-                        knowledge_level = st.selectbox("What is your current level of knowledge?*", ["Beginner", "Intermediate", "Advanced"])
-                        session_feedback = st.text_area("How did you feel about the session?*")
+                    with st.form(key="feedback_form"):
+                        first_name = st.text_input(label="First Name*")
+                        last_name = st.text_input(label="Last Name")
+                        college_name = st.text_input(label="Name of College*")
+                        year_of_passing = st.text_input(label="Year of Passing*")
+                        knowledge_level = st.selectbox("What is your current level of knowledge?*", ["Beginner", "Intermediate", "Advanced"],index=None)
+                        session_feedback = st.text_area(label="How did you feel about the session?*")
                         expected_score = st.slider("What score out of 10 do you expect in this interview?*", 0, 10, 5)
-                        overall_experience = st.text_area("How was your experience in the interview?*")
-                        reuse=st.selectbox("Will you use future versions of this app?*", ["Yes", "No"])
+                        overall_experience = st.text_area(label="How was your experience in the interview?*")
+                        reuse=st.selectbox("Will you use future versions of this app?*", ["Yes", "No"],index=None)
 
                         st.markdown("*Fields marked with * are required.*")
         
-                        submitted = st.form_submit_button("Submit Feedback")
+                        submitted = st.form_submit_button(label="Submit Feedback")
 
                 if submitted:
                     if not first_name or not college_name or not year_of_passing or not knowledge_level or not session_feedback or not expected_score or not overall_experience or not reuse:
@@ -409,22 +413,29 @@ def main():
                     else:
                         i=i+1
 
-                        feedback_data = pd.DataFrame({
-                            "Submission Time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            "first_name": first_name,
-                            "last_name": last_name,
-                            "college_name": college_name,
-                            "year_of_passing": year_of_passing,
-                            "knowledge_level": knowledge_level,
-                            "session_feedback": session_feedback,
-                            "expected_score": expected_score,
-                            "overall_experience": overall_experience,
-                            "reuse": reuse,
-                        },index=[i])
+                        feedback_data = pd.DataFrame(
+
+                            [                           
+                            
+                                {
+                                "Submission Time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                "first_name": first_name,
+                                "last_name": last_name,
+                                "college_name": college_name,
+                                "year_of_passing": year_of_passing,
+                                "knowledge_level": knowledge_level,
+                                "session_feedback": session_feedback,
+                                "expected_score": expected_score,
+                                "overall_experience": overall_experience,
+                                "reuse": reuse,
+                            }],
+                            
+                            index=[i]
+                            )
 
                         updated_df=pd.concat([existing_data,feedback_data],ignore_index=True)
                         
-                        conn.update(worksheet="User Feedback Data",data=updated_df)
+                        conn.update(worksheet="data",data=updated_df)
 
                         st.success("Thank you for your feedback! Your responses have been recorded. You can now download your interview transcript and view your results.")
 

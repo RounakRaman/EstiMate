@@ -1,3 +1,4 @@
 /all_interviews_scripts   
 /feedback_data
 .streamlit/secrets.toml
+.venv/
