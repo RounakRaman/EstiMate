@@ -16,8 +16,7 @@ url="https://docs.google.com/spreadsheets/d/1kWUzF7UqwA2_1ZFxAxM3Omd8tBnIP7L_1qv
 conn = st.connection("gsheets", type=GSheetsConnection)
 existing_data = conn.read(spreadsheet=url,usecols=list(range(10)))
 
-if conn is None:
-    st.error("Google Sheets connection failed. Please check your credentials.")
+
 #######################################################################################
 ## Chatbot Class
 class GuesstimateChatbot:
@@ -425,7 +424,7 @@ def main():
                         },index=[i])
 
                         updated_df=pd.concat([existing_data,feedback_data],ignore_index=True)
-
+                        st.write(updated_df)
                         conn.update(worksheet="User Feedback Data",data=updated_df)
 
                         st.success("Thank you for your feedback! Your responses have been recorded. You can now download your interview transcript and view your results.")
