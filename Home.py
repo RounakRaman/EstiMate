@@ -457,7 +457,7 @@ def main():
                     with open(feedback_file_path, "w") as feedback_file:
                         json.dump(feedback_data_json, feedback_file,indent=4)
             
-                    
+                    st.success("Thank you for your feedback! Your responses have been recorded.")
                     st.session_state.form_submitted = True
 
                 if st.session_state.evaluation_done and st.session_state.get("form_submitted"):
