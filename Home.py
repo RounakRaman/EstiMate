@@ -101,7 +101,7 @@ Example interview patterns from real interviews -:
         """Start a new interview with a problem statement"""
         self.conversation_history = []
         self.current_problem = self.select_problem()
-        return f"Your problem statement is to {self.current_problem}. Please provide your approach to estimate this value."
+        return f"Your problem statement is to calculate {self.current_problem}. Please provide your approach to estimate this value."
     
     def conduct_interview(self, candidate_response: str) -> str:
         """Conduct one turn of the guesstimate interview"""
