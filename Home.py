@@ -134,9 +134,9 @@ Example interview patterns from real interviews -:
         self.token_stats['output_tokens'] += output_tokens
         
         # Calculate costs
-        input_cost = (input_tokens * self.input_cost_per_token) + \
-                    (input_tokens * self.prompt_cache_write_cost)
-        output_cost = output_tokens * self.output_cost_per_token
+        input_cost = (input_tokens * self.cost_rates["input"]) + \
+                    (input_tokens * self.cost_rates["cache_write"])
+        output_cost = output_tokens * self.cost_rates["output"]
         
         # Update costs
         self.token_stats['input_cost'] += input_cost
