@@ -51,7 +51,7 @@ class GuesstimateChatbot:
             'cache_write': 0.00375,  # $3.75/MTok
             'cache_read': 0.0003    # $0.30/MTok
         }
-        self.max_cost = 0.05  # $0.50 limit
+        self.max_cost_limit = 0.05  # $0.50 limit
 
         ## Changes --------------------------------------
         # Initialize system prompt
