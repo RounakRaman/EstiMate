@@ -149,9 +149,9 @@ Example interview patterns from real interviews -:
         """Check if adding more tokens would exceed the cost limit"""
         # Estimate costs including cache costs
         estimated_cost = (
-            (estimated_input_tokens * self.self.cost_rates["input"]) +
-            (estimated_input_tokens * self.self.cost_rates["cache_write"]) +
-            (estimated_input_tokens * 1.5 * self.self.cost_rates["output"])  # Assume output is 1.5x input
+            (estimated_input_tokens * self.cost_rates["input"]) +
+            (estimated_input_tokens * self.cost_rates["cache_write"]) +
+            (estimated_input_tokens * 1.5 * self.cost_rates["output"])  # Assume output is 1.5x input
         )
         
         return (self.token_stats['total_cost'] + estimated_cost) > self.max_cost_limit
