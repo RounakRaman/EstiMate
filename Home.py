@@ -122,8 +122,9 @@ Example interview patterns from real interviews -:
         return f"Your problem statement is to calculate {self.current_problem}. Please provide your approach to estimate this value."
     
     ## Changed Functions--------------------------
-        def update_token_stats(self, response) -> None:
-            """Update token usage statistics based on API response"""
+
+    def update_token_stats(self, response) -> None:
+        """Update token usage statistics based on API response"""
         # Get input and output tokens from response
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
@@ -141,7 +142,9 @@ Example interview patterns from real interviews -:
         self.token_stats['input_cost'] += input_cost
         self.token_stats['output_cost'] += output_cost
         self.token_stats['total_cost'] = self.token_stats['input_cost'] + self.token_stats['output_cost']
-    
+
+
+
     def would_exceed_cost_limit(self, estimated_input_tokens: int) -> bool:
         """Check if adding more tokens would exceed the cost limit"""
         # Estimate costs including cache costs
