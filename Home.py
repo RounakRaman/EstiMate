@@ -46,10 +46,10 @@ class GuesstimateChatbot:
             'total_cost': 0
         }
         self.cost_rates = {
-            'input': 0.003,      # $3/MTok
-            'output': 0.015,     # $15/MTok
-            'cache_write': 0.00375,  # $3.75/MTok
-            'cache_read': 0.0003    # $0.30/MTok
+            'input': 0.000003,      # $3/MTok
+            'output': 0.000015,     # $15/MTok
+            'cache_write': 0.00000375,  # $3.75/MTok (if you need this)
+            'cache_read': 0.0000003    # $0.30/MTok (if you need this)
         }
         self.max_cost_limit = 0.25  # $0.50 limit
 
@@ -123,24 +123,21 @@ Example interview patterns from real interviews -:
     
     ## Changed Functions--------------------------
 
-    def update_token_stats(self, response) -> None:
-        # Get input and output tokens from response
-        input_tokens = response.usage.input_tokens
-        output_tokens = response.usage.output_tokens
-        
-        # Update token counts
-        self.token_stats['input_tokens'] += input_tokens
-        self.token_stats['output_tokens'] += output_tokens
-        
-        # Calculate basic costs - without double counting cache operations
-        input_cost = input_tokens * self.cost_rates["input"]
-        output_cost = output_tokens * self.cost_rates["output"]
-        
-        # Update costs
-        self.token_stats['input_cost'] += input_cost
-        self.token_stats['output_cost'] += output_cost
-        self.token_stats['total_cost'] = self.token_stats['input_cost'] + self.token_stats['output_cost']
-
+def update_token_stats(self, response) -> None:
+    input_tokens = response.usage.input_tokens
+    output_tokens = response.usage.output_tokens
+    
+    self.token_stats['input_tokens'] += input_tokens
+    self.token_stats['output_tokens'] += output_tokens
+    
+    # Calculate with correct per-token rates
+    input_cost = input_tokens * 0.000003  # $3 per million tokens
+    output_cost = output_tokens * 0.000015  # $15 per million tokens
+    
+    self.token_stats['input_cost'] += input_cost
+    self.token_stats['output_cost'] += output_cost
+    self.token_stats['total_cost'] = self.token_stats['input_cost'] + self.token_stats['output_cost']
+    
 
 
     def would_exceed_cost_limit(self, estimated_input_tokens: int) -> bool:
