@@ -123,23 +123,23 @@ Example interview patterns from real interviews -:
     
     ## Changed Functions--------------------------
 
-def update_token_stats(self, response) -> None:
-    # Get input and output tokens from response
-    input_tokens = response.usage.input_tokens
-    output_tokens = response.usage.output_tokens
-    
-    # Update token counts
-    self.token_stats['input_tokens'] += input_tokens
-    self.token_stats['output_tokens'] += output_tokens
-    
-    # Calculate basic costs - without double counting cache operations
-    input_cost = input_tokens * self.cost_rates["input"]
-    output_cost = output_tokens * self.cost_rates["output"]
-    
-    # Update costs
-    self.token_stats['input_cost'] += input_cost
-    self.token_stats['output_cost'] += output_cost
-    self.token_stats['total_cost'] = self.token_stats['input_cost'] + self.token_stats['output_cost']
+    def update_token_stats(self, response) -> None:
+        # Get input and output tokens from response
+        input_tokens = response.usage.input_tokens
+        output_tokens = response.usage.output_tokens
+        
+        # Update token counts
+        self.token_stats['input_tokens'] += input_tokens
+        self.token_stats['output_tokens'] += output_tokens
+        
+        # Calculate basic costs - without double counting cache operations
+        input_cost = input_tokens * self.cost_rates["input"]
+        output_cost = output_tokens * self.cost_rates["output"]
+        
+        # Update costs
+        self.token_stats['input_cost'] += input_cost
+        self.token_stats['output_cost'] += output_cost
+        self.token_stats['total_cost'] = self.token_stats['input_cost'] + self.token_stats['output_cost']
 
 
 
