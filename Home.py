@@ -665,7 +665,8 @@ def main():
     # Sidebar for API key, controls, and token tracking
     with st.sidebar:
         st.header("Configuration")
-        api_key = st.text_input("Enter Anthropic API Key:", type="password")
+        api_key = st.secrets["ANTHROPIC"]["ANTHROPIC_API_KEY"]
+        ##api_key = st.text_input("Enter Anthropic API Key:", type="password")
         interview_data_path = "interview_with_context.json"
         
         # Display token usage stats if interview is started
