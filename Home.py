@@ -673,17 +673,17 @@ def main():
         if st.session_state.chatbot:
             st.header("Token Usage Stats")
             stats = st.session_state.chatbot.token_stats
-            col1, col2 = st.columns(2)
+            # col1, col2 = st.columns(2)
             
-            with col1:
-                st.metric("Input Tokens", f"{stats['input_tokens']:,}")
-                st.metric("Output Tokens", f"{stats['output_tokens']:,}")
+            # with col1:
+            #     st.metric("Input Tokens", f"{stats['input_tokens']:,}")
+            #     st.metric("Output Tokens", f"{stats['output_tokens']:,}")
             
-            with col2:
-                st.metric("Input Cost", f"${stats['input_cost']:.4f}")
-                st.metric("Output Cost", f"${stats['output_cost']:.4f}")
+            # with col2:
+            #     st.metric("Input Cost", f"${stats['input_cost']:.4f}")
+            #     st.metric("Output Cost", f"${stats['output_cost']:.4f}")
             
-            st.metric("Total Cost", f"${stats['total_cost']:.4f}")
+            # st.metric("Total Cost", f"${stats['total_cost']:.4f}")
             
             # Show warning if approaching cost limit
             if stats['total_cost'] > (st.session_state.chatbot.max_cost_limit * 0.8):
