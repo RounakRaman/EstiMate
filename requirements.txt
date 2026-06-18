@@ -5,3 +5,4 @@ fpdf
 pandas
 fpdf2
 st-gsheets-connection
+groq
