@@ -56,13 +56,21 @@ st.markdown("""
         color: #2e7d32;
         margin-bottom: 14px;
     }
-    .eval-header {
-        background: linear-gradient(135deg, #0d47a1, #1565c0);
+    .eval-ready-banner {
+        background: linear-gradient(135deg, #1b5e20, #2e7d32);
         color: white;
         border-radius: 12px;
-        padding: 18px 24px;
-        margin-bottom: 20px;
+        padding: 22px 24px;
+        margin: 20px 0;
         text-align: center;
+        font-size: 18px;
+        font-weight: 600;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.5); }
+        70%  { box-shadow: 0 0 0 12px rgba(46, 125, 50, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
     }
     .score-overall {
         background: white;
@@ -71,6 +79,14 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         text-align: center;
         margin-bottom: 16px;
+    }
+    .eval-header {
+        background: linear-gradient(135deg, #0d47a1, #1565c0);
+        color: white;
+        border-radius: 12px;
+        padding: 18px 24px;
+        margin-bottom: 20px;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -104,12 +120,14 @@ DONE_PHRASES = [
     "that is my answer", "i'm finished", "i am finished",
     "done with my estimate", "my final answer", "my estimate is complete",
     "finished my estimate", "that's my final", "conclude my estimate",
-    "end my interview", "submit my answer"
+    "end my interview", "submit my answer", "done"
 ]
 
 def user_signaled_done(text: str) -> bool:
     lowered = text.lower().strip()
-    return any(phrase in lowered for phrase in DONE_PHRASES)
+    # Exact match OR contains a done phrase
+    return any(phrase == lowered or phrase in lowered for phrase in DONE_PHRASES)
+
 
 # ─────────────────────────────────────────────
 # CHATBOT CLASS
@@ -143,11 +161,11 @@ Filters that can be used in a problem:
 Follow these guidelines strictly:
 1. Start with a clear problem statement.
 2. Let the candidate ask clarifying questions. Do NOT suggest clarifying questions — let them ask their own.
-3. Give only relevant, short, and required answers to clarifying questions. No praise like "That's a good question." Keep answers India-specific wherever region is not mentioned.
+3. Give only relevant, short, and required answers to clarifying questions. No praise. Keep answers India-specific where region is not mentioned.
 4. Once clarifying questions are done, the candidate will start their approach.
-5. Challenge their assumptions, calculations, reasoning, and segmentation filters with relevant questions if necessary.
+5. Challenge assumptions, calculations, reasoning, and segmentation filters with relevant questions if necessary.
 6. Do NOT suggest next filters or calculations. Let the candidate lead.
-7. If the candidate says "I'm done" or signals completion, acknowledge it and give a brief closing remark. The evaluation will be handled separately.
+7. If the candidate says "I'm done" or any phrase signaling completion, simply say: "Thank you. Your interview is now complete." — nothing more.
 
 IMPORTANT: Be concise. Do not over-explain. Act like a real interviewer — neutral, focused, and direct.
 
@@ -169,7 +187,7 @@ Example interview patterns:
         return (
             f"Your problem statement is: **{self.current_problem}**\n\n"
             "Please begin by asking any clarifying questions you need. "
-            "When you've finished your estimate, type **\"I'm done\"**."
+            "Type **\"I'm done\"** when you have finished your estimate."
         )
 
     def conduct_interview(self, candidate_response: str) -> str:
@@ -182,65 +200,50 @@ Example interview patterns:
         })
 
         messages = [{"role": "system", "content": self.system_prompt}]
-
         if self.current_problem:
             messages.append({
                 "role": "assistant",
                 "content": f"Problem statement: {self.current_problem}"
             })
-
         messages.extend(self.conversation_history)
 
         try:
             response = self.client.chat.completions.create(
                 model=GROQ_MODEL,
                 messages=messages,
-                max_tokens=1024,
+                max_tokens=512,
                 temperature=0.7,
             )
             reply = response.choices[0].message.content
         except Exception as e:
-            reply = f"Error getting response: {str(e)}. Please check your Groq API key."
+            reply = f"Error: {str(e)}"
 
-        self.conversation_history.append({
-            "role": "assistant",
-            "content": reply
-        })
-
+        self.conversation_history.append({"role": "assistant", "content": reply})
         self.turn_count += 1
         return reply
 
     def evaluate_candidate(self) -> Dict:
-        evaluation_prompt = """Based on the interview conversation, evaluate the candidate and return ONLY a valid JSON object with these exact keys:
+        evaluation_prompt = """Evaluate this guesstimate interview. Return ONLY a valid JSON object — no markdown, no explanation, no code blocks.
+
 {
   "structure": <integer 1-5>,
   "assumptions": <integer 1-5>,
   "segmentation": <integer 1-5>,
   "math": <integer 1-5>,
   "context": <integer 1-5>,
-  "filters_missed": "<string describing missed filters>",
-  "key_strengths": "<string describing what the candidate did well>",
-  "areas_for_improvement": "<string with specific actionable improvements>"
+  "filters_missed": "<string>",
+  "key_strengths": "<string>",
+  "areas_for_improvement": "<string>"
 }
 
-Score guidelines:
-- 1: Very poor, major issues
-- 2: Below average, several issues
-- 3: Average, meets basic expectations
-- 4: Good, minor issues
-- 5: Excellent, no significant issues
-
-Return ONLY the JSON. No explanation, no markdown, no code blocks. Raw JSON only."""
+Scoring: 1=Very Poor, 2=Below Average, 3=Average, 4=Good, 5=Excellent
+RAW JSON ONLY. No preamble. No trailing text."""
 
         messages = [
-            {"role": "system", "content": "You are a strict evaluator. Return only valid JSON."},
+            {"role": "system", "content": "Return only raw valid JSON. No markdown. No explanation."},
             {
                 "role": "user",
-                "content": (
-                    f"Problem: {self.current_problem}\n\n"
-                    f"Transcript:\n{json.dumps(self.conversation_history)}\n\n"
-                    f"{evaluation_prompt}"
-                )
+                "content": f"Problem: {self.current_problem}\n\nTranscript:\n{json.dumps(self.conversation_history)}\n\n{evaluation_prompt}"
             }
         ]
 
@@ -249,29 +252,28 @@ Return ONLY the JSON. No explanation, no markdown, no code blocks. Raw JSON only
                 model=GROQ_MODEL,
                 messages=messages,
                 max_tokens=1024,
-                temperature=0.2,
+                temperature=0.1,
             )
             raw = response.choices[0].message.content.strip()
-            # Strip markdown fences if model adds them
-            if "```" in raw:
-                parts = raw.split("```")
-                for part in parts:
-                    part = part.strip()
-                    if part.startswith("json"):
-                        part = part[4:].strip()
-                    try:
-                        return json.loads(part)
-                    except Exception:
-                        continue
+
+            # Aggressively clean any markdown fences
+            raw = raw.replace("```json", "").replace("```", "").strip()
+
+            # Find the JSON object
+            start = raw.find("{")
+            end = raw.rfind("}") + 1
+            if start != -1 and end > start:
+                raw = raw[start:end]
+
             return json.loads(raw)
-        except (json.JSONDecodeError, Exception) as e:
-            st.error(f"Evaluation parsing error: {e}")
+
+        except Exception as e:
             return {
                 "structure": 3, "assumptions": 3, "segmentation": 3,
                 "math": 3, "context": 3,
-                "filters_missed": "Could not parse evaluation.",
-                "key_strengths": "Could not parse evaluation.",
-                "areas_for_improvement": "Could not parse evaluation."
+                "filters_missed": "Evaluation parsing failed. Please retry.",
+                "key_strengths": "N/A",
+                "areas_for_improvement": f"Error: {str(e)}"
             }
 
 
@@ -281,7 +283,7 @@ Return ONLY the JSON. No explanation, no markdown, no code blocks. Raw JSON only
 def response_generator(response: str):
     for word in response.split(" "):
         yield word + " "
-        time.sleep(0.03)
+        time.sleep(0.025)
 
 
 def save_interview(conversation_history: list, evaluation: dict) -> str:
@@ -360,7 +362,8 @@ def download_interview_transcript(conversation_history: list, evaluation: dict) 
 
 
 def create_score_chart(scores: dict):
-    colors = ['#1a73e8' if v >= 7 else '#f4b400' if v >= 5 else '#ea4335' for v in scores.values()]
+    colors = ['#1a73e8' if v >= 7 else '#f4b400' if v >= 5 else '#ea4335'
+              for v in scores.values()]
     fig = go.Figure(data=[
         go.Bar(
             x=list(scores.keys()),
@@ -373,13 +376,8 @@ def create_score_chart(scores: dict):
     ])
     fig.update_layout(
         title=dict(text='Interview Performance Breakdown', font=dict(size=16)),
-        yaxis=dict(
-            title='Score (out of 10)',
-            range=[0, 11],
-            tickmode='linear',
-            tick0=0, dtick=1,
-            gridcolor='#eee'
-        ),
+        yaxis=dict(title='Score (out of 10)', range=[0, 11],
+                   tickmode='linear', tick0=0, dtick=1, gridcolor='#eee'),
         xaxis=dict(tickfont=dict(size=13)),
         plot_bgcolor='white',
         paper_bgcolor='white',
@@ -391,9 +389,9 @@ def create_score_chart(scores: dict):
 
 
 def render_evaluation(eval_data: dict):
-    """Renders the evaluation section. Always call this when evaluation_done is True."""
-    if not isinstance(eval_data, dict) or not eval_data:
-        st.error("No evaluation data found. Please end the interview first.")
+    """Render scores, chart, and feedback — always called after form is submitted."""
+    if not eval_data:
+        st.error("No evaluation data found.")
         return
 
     scores = {
@@ -404,29 +402,26 @@ def render_evaluation(eval_data: dict):
         "Context":      eval_data.get("context", 0) * 2,
     }
     overall = round(sum(scores.values()) / len(scores), 1)
+    overall_color = "#1a73e8" if overall >= 7 else "#f4b400" if overall >= 5 else "#ea4335"
 
-    # Header
     st.markdown("""
     <div class="eval-header">
-        <h2 style="margin:0">📊 Interview Evaluation</h2>
-        <p style="margin:4px 0 0 0; opacity:0.85">Here's how you performed</p>
+        <h2 style="margin:0">📊 Your Interview Results</h2>
     </div>
     """, unsafe_allow_html=True)
 
-    # Overall score
-    overall_color = "#1a73e8" if overall >= 7 else "#f4b400" if overall >= 5 else "#ea4335"
     st.markdown(f"""
     <div class="score-overall">
-        <h1 style="color:{overall_color}; margin:0; font-size:48px">{overall}/10</h1>
-        <p style="color:#888; margin:4px 0 0 0">Overall Score</p>
+        <h1 style="color:{overall_color}; margin:0; font-size:52px">{overall}/10</h1>
+        <p style="color:#888; margin:6px 0 0 0; font-size:15px">Overall Score</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Score cards
+    # Per-dimension cards
     cols = st.columns(5)
     for i, (label, value) in enumerate(scores.items()):
+        color = "#1a73e8" if value >= 7 else "#f4b400" if value >= 5 else "#ea4335"
         with cols[i]:
-            color = "#1a73e8" if value >= 7 else "#f4b400" if value >= 5 else "#ea4335"
             st.markdown(f"""
             <div class="metric-card">
                 <h3 style="color:{color}">{value}/10</h3>
@@ -437,7 +432,7 @@ def render_evaluation(eval_data: dict):
     # Chart
     st.plotly_chart(create_score_chart(scores), use_container_width=True)
 
-    # Feedback columns
+    # Qualitative feedback
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.markdown("**🔍 Filters Missed**")
@@ -457,7 +452,7 @@ def main():
     st.title("🤖 EstiMate | Guesstimate Interview Simulator")
     st.caption("Powered by Groq + LLaMA 3.3 70B · Free & Fast")
 
-    # Session state init
+    # ── SESSION STATE INIT ──
     defaults = {
         'messages': [],
         'interview_started': False,
@@ -465,11 +460,11 @@ def main():
         'chatbot': None,
         'form_submitted': False,
         'evaluation': {},
-        'auto_eval_triggered': False,
+        'eval_triggered': False,   # prevents double eval
     }
-    for key, default in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = default
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
     # ── SIDEBAR ──
     with st.sidebar:
@@ -484,59 +479,59 @@ def main():
 
         if st.session_state.chatbot:
             turns_used = st.session_state.chatbot.turn_count
-            max_turns = st.session_state.chatbot.max_turns
-            progress = turns_used / max_turns
-            st.progress(progress, text=f"Turns: {turns_used}/{max_turns}")
-            if progress > 0.8:
+            max_turns  = st.session_state.chatbot.max_turns
+            pct = turns_used / max_turns
+            st.progress(pct, text=f"Turns: {turns_used}/{max_turns}")
+            if pct > 0.8:
                 st.warning("⚠️ Approaching turn limit. Wrap up soon.")
 
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("▶ Start", disabled=not api_key, use_container_width=True, type="primary"):
-                st.session_state.chatbot = GuesstimateChatbot(api_key)
-                st.session_state.messages = []
+            if st.button("▶ Start", disabled=not api_key,
+                         use_container_width=True, type="primary"):
+                st.session_state.chatbot        = GuesstimateChatbot(api_key)
+                st.session_state.messages       = []
                 st.session_state.interview_started = True
-                st.session_state.evaluation_done = False
-                st.session_state.form_submitted = False
-                st.session_state.evaluation = {}
-                st.session_state.auto_eval_triggered = False
+                st.session_state.evaluation_done   = False
+                st.session_state.form_submitted    = False
+                st.session_state.evaluation        = {}
+                st.session_state.eval_triggered    = False
                 initial = st.session_state.chatbot.start_interview()
-                st.session_state.messages.append({"role": "assistant", "content": initial})
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": initial})
                 st.rerun()
 
         with col2:
-            end_disabled = (
-                not st.session_state.interview_started
-                or st.session_state.evaluation_done
-            )
+            end_disabled = (not st.session_state.interview_started
+                            or st.session_state.evaluation_done)
             if st.button("⏹ End", disabled=end_disabled, use_container_width=True):
-                with st.spinner("Evaluating your interview..."):
-                    evaluation = st.session_state.chatbot.evaluate_candidate()
-                    st.session_state.evaluation = evaluation
-                    st.session_state.evaluation_done = True
-                    save_interview(st.session_state.messages, evaluation)
-                st.success("Evaluation complete! Scroll down to see your results.")
+                if not st.session_state.eval_triggered:
+                    st.session_state.eval_triggered = True
+                    with st.spinner("Evaluating your interview..."):
+                        ev = st.session_state.chatbot.evaluate_candidate()
+                        st.session_state.evaluation     = ev
+                        st.session_state.evaluation_done = True
+                        save_interview(st.session_state.messages, ev)
                 st.rerun()
 
         st.divider()
         st.markdown("""
-**Tips for good guesstimates:**
+**Tips:**
 - Ask 2–3 clarifying questions first
-- Define your scope clearly
 - Segment before calculating
 - State assumptions explicitly
 - Sanity-check your final number
-- Say **"I'm done"** when finished
+- Type **"I'm done"** when finished
 """)
 
-    # ── NOT STARTED ──
+    # ── NOT STARTED SCREEN ──
     if not st.session_state.interview_started:
         st.markdown("""
-        <div style="text-align:center; padding: 60px 20px; color: #888;">
-            <div style="font-size: 64px">🎯</div>
+        <div style="text-align:center; padding:60px 20px; color:#888;">
+            <div style="font-size:64px">🎯</div>
             <h3>Ready to practice?</h3>
-            <p>Hit <b>Start</b> in the sidebar to begin your guesstimate interview.</p>
-            <p style="font-size:13px">Free to use · Powered by Groq · No cost limit</p>
+            <p>Hit <b>Start</b> in the sidebar to begin.</p>
+            <p style="font-size:13px">Free · Powered by Groq · No cost limit</p>
         </div>
         """, unsafe_allow_html=True)
         return
@@ -549,122 +544,145 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    # ── CHAT MESSAGES ──
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # ── CHAT HISTORY ──
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-    # ── CHAT INPUT (only when interview active) ──
+    # ─────────────────────────────────────────
+    # ACTIVE INTERVIEW — chat input
+    # ─────────────────────────────────────────
     if not st.session_state.evaluation_done:
         st.markdown("""
         <div class="tip-box">
-            💡 Ask clarifying questions, then walk through your estimate. Type <b>"I'm done"</b> when finished.
+            💡 Ask clarifying questions, then walk through your estimate.
+            Type <b>"I'm done"</b> when you've finished.
         </div>
         """, unsafe_allow_html=True)
 
         user_input = st.chat_input("Your response...")
-        if user_input:
+
+        if user_input and not st.session_state.eval_triggered:
+
+            # Append + display user message
             st.session_state.messages.append({"role": "user", "content": user_input})
             with st.chat_message("user"):
                 st.markdown(user_input)
 
-            # ── AUTO-DETECT "I'm done" ──
-            if user_signaled_done(user_input) and not st.session_state.auto_eval_triggered:
-                st.session_state.auto_eval_triggered = True
+            if user_signaled_done(user_input):
+                # ── DONE DETECTED ──
+                st.session_state.eval_triggered = True
 
-                # Let interviewer acknowledge first
+                # Interviewer acknowledgement (short)
                 with st.spinner("Interviewer responding..."):
                     ack = st.session_state.chatbot.conduct_interview(user_input)
                 st.session_state.messages.append({"role": "assistant", "content": ack})
                 with st.chat_message("assistant"):
-                    st.write_stream(response_generator(ack))
+                    st.markdown(ack)
 
-                # Now evaluate
-                with st.spinner("Evaluating your performance..."):
-                    evaluation = st.session_state.chatbot.evaluate_candidate()
-                    st.session_state.evaluation = evaluation
+                # Evaluate immediately
+                with st.spinner("🔍 Evaluating your performance — please wait..."):
+                    ev = st.session_state.chatbot.evaluate_candidate()
+                    st.session_state.evaluation      = ev
                     st.session_state.evaluation_done = True
-                    save_interview(st.session_state.messages, evaluation)
+                    save_interview(st.session_state.messages, ev)
 
+                # Force page rerun so evaluation section renders at top
                 st.rerun()
 
             else:
+                # Normal turn
                 with st.spinner("Interviewer thinking..."):
-                    response = st.session_state.chatbot.conduct_interview(user_input)
+                    reply = st.session_state.chatbot.conduct_interview(user_input)
 
-                if response == "TURN_LIMIT_EXCEEDED":
-                    st.warning("Turn limit reached. Auto-evaluating now...")
+                if reply == "TURN_LIMIT_EXCEEDED":
+                    st.warning("Turn limit reached. Evaluating now...")
+                    st.session_state.eval_triggered = True
                     with st.spinner("Evaluating..."):
-                        evaluation = st.session_state.chatbot.evaluate_candidate()
-                        st.session_state.evaluation = evaluation
+                        ev = st.session_state.chatbot.evaluate_candidate()
+                        st.session_state.evaluation      = ev
                         st.session_state.evaluation_done = True
-                        save_interview(st.session_state.messages, evaluation)
+                        save_interview(st.session_state.messages, ev)
+                    st.rerun()
                 else:
-                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    st.session_state.messages.append(
+                        {"role": "assistant", "content": reply})
                     with st.chat_message("assistant"):
-                        st.write_stream(response_generator(response))
+                        st.write_stream(response_generator(reply))
+                    st.rerun()
 
-                st.rerun()
-
-    # ── EVALUATION SECTION ──
+    # ─────────────────────────────────────────
+    # EVALUATION DONE — show results flow
+    # ─────────────────────────────────────────
     if st.session_state.evaluation_done:
         st.divider()
 
-        # ── FEEDBACK FORM (shown before results) ──
+        # ── BIG VISIBLE BANNER so user knows to scroll ──
+        st.markdown("""
+        <div class="eval-ready-banner">
+            ✅ Interview Complete! Your results are below ↓
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── FEEDBACK FORM (gates the score display) ──
         if not st.session_state.form_submitted:
-            st.subheader("📝 Quick Feedback — Unlock Your Results")
-            st.caption("Fill this in to view your scores and detailed feedback.")
+            st.subheader("📝 Quick Feedback — then see your scores")
+            st.caption("This takes 30 seconds and helps us improve EstiMate.")
 
             with st.form(key="feedback_form"):
                 c1, c2 = st.columns(2)
                 with c1:
-                    first_name = st.text_input("First Name *")
-                    college_name = st.text_input("College *")
+                    first_name     = st.text_input("First Name *")
+                    college_name   = st.text_input("College *")
                     knowledge_level = st.selectbox(
                         "Your Level *",
                         ["Beginner", "Intermediate", "Advanced"],
-                        index=None,
-                        placeholder="Select level"
+                        index=None, placeholder="Select level"
                     )
                     reuse = st.selectbox(
                         "Would you use future versions? *",
                         ["Yes", "No"],
-                        index=None,
-                        placeholder="Select"
+                        index=None, placeholder="Select"
                     )
                 with c2:
-                    last_name = st.text_input("Last Name")
+                    last_name       = st.text_input("Last Name")
                     year_of_passing = st.text_input("Year of Passing *")
-                    expected_score = st.slider("Expected Score (out of 10) *", 0, 10, 5)
+                    expected_score  = st.slider("Expected Score (out of 10)", 0, 10, 5)
 
-                session_feedback = st.text_area("How did the session go? *", placeholder="Describe your experience...")
-                overall_experience = st.text_area("Overall experience with EstiMate? *", placeholder="Any suggestions for improvement?")
+                session_feedback   = st.text_area(
+                    "How did the session go? *",
+                    placeholder="Describe your experience with the interviewer..."
+                )
+                overall_experience = st.text_area(
+                    "Overall experience with EstiMate? *",
+                    placeholder="Any suggestions for improvement?"
+                )
                 st.caption("* Required fields")
 
                 submitted = st.form_submit_button(
-                    "Submit & View My Results →",
+                    "Submit & View My Scores →",
                     type="primary",
                     use_container_width=True
                 )
 
             if submitted:
-                missing = []
-                if not first_name: missing.append("First Name")
-                if not college_name: missing.append("College")
-                if not year_of_passing: missing.append("Year of Passing")
-                if not knowledge_level: missing.append("Your Level")
-                if not session_feedback: missing.append("Session Feedback")
-                if not overall_experience: missing.append("Overall Experience")
-                if not reuse: missing.append("Would you reuse?")
+                missing = [f for f, v in [
+                    ("First Name",        first_name),
+                    ("College",           college_name),
+                    ("Year of Passing",   year_of_passing),
+                    ("Your Level",        knowledge_level),
+                    ("Session Feedback",  session_feedback),
+                    ("Overall Experience",overall_experience),
+                    ("Would you reuse",   reuse),
+                ] if not v]
 
                 if missing:
-                    st.warning(f"Please fill required fields: {', '.join(missing)}")
+                    st.warning(f"Please fill: {', '.join(missing)}")
                 else:
-                    # Save to Google Sheets
                     try:
                         conn = get_connection()
                         existing_data = load_existing_data()
-                        feedback_df = pd.DataFrame([{
+                        new_row = pd.DataFrame([{
                             "Submission Time":    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             "first_name":         first_name,
                             "last_name":          last_name,
@@ -676,45 +694,44 @@ def main():
                             "overall_experience": overall_experience,
                             "reuse":              reuse,
                         }])
-                        updated_df = pd.concat([existing_data, feedback_df], ignore_index=True)
-                        conn.update(worksheet="data", data=updated_df)
-                        st.success("✅ Feedback saved!")
+                        updated = pd.concat([existing_data, new_row], ignore_index=True)
+                        conn.update(worksheet="data", data=updated)
                     except Exception as e:
                         st.warning(f"Could not save to Google Sheets: {e}")
 
                     st.session_state.form_submitted = True
                     st.rerun()
 
-        # ── SHOW RESULTS (after form submitted) ──
+        # ── SCORES (shown after form submit) ──
         if st.session_state.form_submitted:
             render_evaluation(st.session_state.evaluation)
 
-            # ── PDF DOWNLOAD ──
             st.divider()
-            col_dl1, col_dl2 = st.columns([1, 1])
+            col_dl1, col_dl2 = st.columns(2)
+
             with col_dl1:
                 if st.button("📄 Generate PDF Transcript", use_container_width=True):
                     with st.spinner("Generating PDF..."):
-                        file_name = download_interview_transcript(
+                        fname = download_interview_transcript(
                             st.session_state.messages,
                             st.session_state.evaluation
                         )
-                    with open(file_name, "rb") as f:
+                    with open(fname, "rb") as f:
                         st.download_button(
                             label="⬇️ Download PDF",
                             data=f.read(),
-                            file_name=file_name,
+                            file_name=fname,
                             mime="application/pdf",
                             use_container_width=True
                         )
+
             with col_dl2:
-                if st.button("🔄 Start New Interview", use_container_width=True, type="primary"):
-                    for key in ['messages', 'interview_started', 'evaluation_done',
-                                'chatbot', 'form_submitted', 'evaluation', 'auto_eval_triggered']:
-                        st.session_state[key] = ([] if key == 'messages'
-                                                  else {} if key == 'evaluation'
-                                                  else None if key == 'chatbot'
-                                                  else False)
+                if st.button("🔄 New Interview", use_container_width=True, type="primary"):
+                    for k, v in defaults.items():
+                        st.session_state[k] = (
+                            [] if isinstance(v, list) else
+                            {} if isinstance(v, dict) else v
+                        )
                     st.rerun()
 
 
